@@ -1,0 +1,18 @@
+# The following values should be supplied explicitly
+# matlab_version, e.g. R2019a
+# iso_name (file name of the ISO on the FTP server)
+# iso_base_url (full URL of the directory where the ISO file resides)
+# matlab_FIK (File Installation Key, ~20 5-digit numbers)
+# matlab_license_server (space-separated URL (without protocol), server id, and port number)
+iso_source: "{{ iso_base_url }}/{{ iso_name }}"
+volume_name: Matlab ISO
+volume_device: /dev/vdb
+volume_mount_point: /mnt/matlab
+matlab_install_dir: /usr/local
+iso_dir: '{{ volume_mount_point }}/matlab/{{ matlab_version }}'
+iso_mount_point: /mnt/matlab_iso
+activate_path: /tmp/activate.ini
+inst_input_path: /tmp/installer_input.txt
+license_path: /tmp/license.lic
+install_success: false
+activation_success: false

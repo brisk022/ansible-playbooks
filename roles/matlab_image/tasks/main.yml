@@ -1,0 +1,204 @@
+---
+- name: Install dependencies
+  apt:
+    name:
+      - openjdk-8-jre-headless
+      - build-essential
+      - libxt6
+      - libxft2
+      - xauth
+  become: yes
+  when: "ansible_facts['os_family'] == 'Debian'"
+
+# The state of X11 on CentOS is a mess. xorg-x11-apps might be redundant but it fetches several
+# dependencies that might be needed after all. Without the other libX packages, Matlab GUI will not
+# start.
+- name: Install dependencies
+  yum:
+    name:
+      - java-1.8.0-openjdk-headless
+      - gcc
+      - xorg-x11-xauth
+      - xorg-x11-apps
+      - libXft
+      - libXi
+      - libXt
+      - libXtst
+  become: yes
+  when: "ansible_facts['os_family'] == 'RedHat'"
+
+- name: Attach volume with matlab ISOs
+  os_server_volume:
+    state: present
+    volume: "{{ volume_name }}"
+    device: "{{ volume_device }}"
+    server: "{{ servers[0].name }}"
+  delegate_to: 127.0.0.1
+
+- name: Mount volume with matlab ISOs
+  mount:
+    name: "{{ volume_mount_point }}"
+    state: mounted
+    src: "{{ volume_device }}"
+    fstype: auto
+  register: volume_mounted
+  become: yes
+
+- name: Stat ISO path
+  stat:
+    path: "{{ iso_dir }}/{{ iso_name }}"
+    get_checksum: no
+    get_attributes: no
+  register: iso_path_info
+
+- name: Create ISO target directory
+  file:
+    path: "{{ iso_dir }}"
+    state: directory
+    mode: '755'
+
+- name: Download ISO
+  get_url:
+    url: "{{ iso_source }}"
+    dest: "{{ iso_dir }}/{{ iso_name }}"
+  when: not iso_path_info.stat.exists
+
+- name: Create ISO mount point
+  file:
+    path: "{{ iso_mount_point }}"
+    state: directory
+    mode: '755'
+  become: yes
+
+- name: Mount ISO image
+  mount:
+    path: "{{ iso_mount_point }}"
+    src: "{{ iso_dir }}/{{ iso_name }}"
+    fstype: iso9660
+    opts: loop,ro
+    state: mounted
+  become: yes
+
+- name: Copy activate.ini template
+  copy:
+    src: "{{ iso_mount_point }}/activate.ini"
+    remote_src: yes
+    dest: "{{ activate_path }}"
+    mode: '644'
+
+- name: Customize activate.ini
+  lineinfile:
+    dest: "{{ activate_path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backrefs: yes
+  loop:
+    - { regexp: '^(activateCommand)=$', line: '\1=activateOffline' }
+    - { regexp: '^(licenseFile)=$', line: '\1={{ license_path }}' }
+
+- name: Copy installer input template
+  copy:
+    src: "{{ iso_mount_point }}/installer_input.txt"
+    remote_src: yes
+    dest: "{{ inst_input_path }}"
+    mode: '644'
+
+- name: Customize installer input file
+  lineinfile:
+    dest: "{{ inst_input_path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backrefs: yes
+  loop:
+    - { regexp: '^# (fileInstallationKey)=$', line: '\1={{ matlab_FIK }}' }
+    - { regexp: '^# (mode)=$', line: '\1=silent' }
+    - { regexp: '^# (activationPropertiesFile)=$', line: '\1={{ activate_path }}' }
+    - { regexp: '^# (agreeToLicense)=$', line: '\1=yes' }
+    - { regexp: '^# (licensePath)=$', line: '\1={{ license_path }}' }
+
+- name: Create license file
+  lineinfile:
+    dest: "{{ license_path }}"
+    create: yes
+    state: present
+    line: "{{ item }}"
+    mode: "664"
+  loop:
+    - "SERVER {{ matlab_license_server }}"
+    - "USE SERVER"
+
+- name: Silent Matlab installation
+  command: "{{ iso_mount_point }}/install -inputFile {{ inst_input_path }} -v"
+  args:
+    creates: /usr/local/MATLAB/{{ matlab_version }}
+  become: yes
+  register: matlab_install
+
+- name: Check installation result
+  set_fact:
+    install_success: true
+  when: matlab_install.stdout.find("End - Successful") != -1
+
+- name: Check activation result
+  set_fact:
+    activation_success: true
+  when: matlab_install.stdout.find("Silent activation failed.") == -1
+
+- name: Create symlinks for executables
+  file:
+    src: /usr/local/MATLAB/{{ matlab_version }}/bin/{{ item }}
+    dest: /usr/local/bin/{{ item }}
+    state: link
+  loop:
+    - matlab
+    - mcc
+    - mex
+    - mbuild
+  become: yes
+  when: install_success|bool
+
+- name: Unmount ISO image
+  mount:
+    path: "{{ iso_mount_point }}"
+    state: unmounted
+  become: yes
+  when: install_success|bool
+
+- name: Unmount volume with matlab ISOs
+  mount:
+    path: "{{ volume_mount_point }}"
+    state: unmounted
+  become: yes
+  when: install_success|bool
+
+- name: Detach volume with matlab ISOs
+  os_server_volume:
+    state: absent
+    volume: "{{ volume_name }}"
+    server: "{{ servers[0].name }}"
+  delegate_to: 127.0.0.1
+  when: install_success|bool
+
+- name: Cleanup installation files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/installer_input.txt
+    - /tmp/activate.ini
+    - /tmp/mathworks_root.log
+    - "{{ iso_mount_point }}"
+    - "{{ volume_mount_point }}"
+  become: yes
+  when: install_success|bool
+
+- name: Remove activation log file
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/license.lic
+    - /tmp/aws_root.log
+  become: yes
+  when: activation_success|bool
+

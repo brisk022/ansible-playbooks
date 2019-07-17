@@ -1,0 +1,25 @@
+---
+- name: Install matalb
+  hosts: localhost
+  vars:
+    servers:
+      - name: matlab-image-ubuntu
+        image: "***Ubuntu 18.04 (2019-05-24)"
+        flavor: 2cpu-2ram-server
+        key_name: ''
+        nics:
+          - net-name: uzh-only
+        meta:
+          group:
+            matlab_image
+    matlab_version: R2019a
+    iso_name: "{{ matlab_version }}_Linux.iso"
+    iso_base_url: ''
+    matlab_FIK: ''
+    matlab_license_server: ''
+
+  roles:
+    - { role: create_instances }
+    - { role: upgrade_packages } 
+    - { role: matlab_image }
+
