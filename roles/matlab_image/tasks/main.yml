@@ -32,7 +32,7 @@
     state: present
     volume: "{{ volume_name }}"
     device: "{{ volume_device }}"
-    server: "{{ servers[0].name }}"
+    server: "{{ ansible_hostname }}"
   delegate_to: 127.0.0.1
 
 - name: Mount volume with matlab ISOs
@@ -41,6 +41,7 @@
     state: mounted
     src: "{{ volume_device }}"
     fstype: auto
+    boot: no
   register: volume_mounted
   become: yes
 
@@ -77,6 +78,7 @@
     fstype: iso9660
     opts: loop,ro
     state: mounted
+    boot: no
   become: yes
 
 - name: Copy activate.ini template
@@ -161,6 +163,7 @@
   mount:
     path: "{{ iso_mount_point }}"
     state: unmounted
+    boot: no
   become: yes
   when: install_success|bool
 
@@ -168,6 +171,7 @@
   mount:
     path: "{{ volume_mount_point }}"
     state: unmounted
+    boot: no
   become: yes
   when: install_success|bool
 
@@ -175,7 +179,7 @@
   os_server_volume:
     state: absent
     volume: "{{ volume_name }}"
-    server: "{{ servers[0].name }}"
+    server: "{{ ansible_hostname }}"
   delegate_to: 127.0.0.1
   when: install_success|bool
 
