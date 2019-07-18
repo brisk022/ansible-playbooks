@@ -7,13 +7,20 @@
     image: "{{ item.image }}"
     flavor: "{{ item.flavor }}"
     nics: "{{ item.nics }}"
+    wait: yes
   loop: "{{ servers }}"
   register: "os_hosts"
+
+# os_server waits until the instance is created but not necessarily until it boots
+- name: Timeout
+  pause:
+    minutes: 1
 
 - name: Add hosts to inventory
   add_host:
     name: "{{ item.openstack.name }}"
     groups: "{{ item.item.meta.group }}"
     ansible_host: "{{ item.openstack.accessIPv4 }}"
+    ansible_ssh_user: "{{ item.item.meta.ssh_user }}"
   loop: "{{ os_hosts.results }}"
 
