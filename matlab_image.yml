@@ -1,5 +1,5 @@
 ---
-- name: Install matalb
+- name: Create instance
   hosts: localhost
   vars:
     servers:
@@ -10,16 +10,20 @@
         nics:
           - net-name: uzh-only
         meta:
-          group:
-            matlab_image
+          group: matlab_image
+          ssh_user: ubuntu
+  roles:
+    - { role: create_instances }
+
+- name: Install Matlab
+  hosts: matlab_image
+  vars:
     matlab_version: R2019a
     iso_name: "{{ matlab_version }}_Linux.iso"
     iso_base_url: ''
     matlab_FIK: ''
     matlab_license_server: ''
-
   roles:
-    - { role: create_instances }
     - { role: upgrade_packages } 
     - { role: matlab_image }
 
