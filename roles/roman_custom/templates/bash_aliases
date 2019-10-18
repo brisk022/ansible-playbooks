@@ -1,0 +1,9 @@
+alias xx='exit'
+
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+alias xzgrep='xzgrep --color=auto'
+alias zgrep='zgrep --color=auto'
+
+alias R='R --no-environ'

@@ -1,0 +1,41 @@
+---
+- name: Install dependencies
+  apt:
+    name:
+      - tmux
+      - keychain
+  become: yes
+  when: "ansible_facts['os_family'] == 'Debian'"
+
+- name: Copy tmux.conf
+  copy:
+    src: templates/tmux.conf
+    dest: ~/.tmux.conf
+    mode: '644'
+
+- name: Copy vimrc
+  copy:
+    src: templates/vimrc
+    dest: ~/.vimrc
+    mode: '644'
+
+- name: Copy bash_aliases
+  copy:
+    src: templates/bash_aliases
+    dest: ~/.bash_aliases
+    mode: '644'
+
+- name: Copy bashrc
+  copy:
+    src: templates/bashrc
+    dest: ~/.bashrc
+    mode: '644'
+
+- name: Copy inputrc
+  copy:
+    src: templates/inputrc
+    dest: ~/.inputrc
+    mode: '644'
+
+
+    # vim, aliases, term, keychain, conda?

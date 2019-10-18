@@ -1,0 +1,42 @@
+set nocompatible
+filetype plugin indent on
+
+function! Tabs(width, ...)
+	let &shiftwidth=a:width
+	let &tabstop=a:width
+	let &softtabstop=a:width
+	if (a:0 > 0 && a:1 == 1)
+		set expandtab
+	else
+		set noexpandtab
+	endif
+endfunction
+set autoindent
+" These will prevent the argument alignment in R files
+let r_indent_align_args = 0
+let r_indent_ess_comments = 0
+let r_indent_ess_compatible = 0
+set number
+set numberwidth=4
+set ruler
+" inoremap jk <ESC>
+map <S-Enter> O<ESC>
+map <Enter> o<ESC>
+syntax on
+colorscheme matrix
+" Margin indicator. hi must be after colorscheme
+set colorcolumn=101
+hi ColorColumn ctermbg=darkblue
+" Textwidth for wrapping. Add t to fo for automatic wrapping
+set textwidth=100
+set formatoptions=cq
+" In MacPorts vim this value is reset
+set backspace=indent,eol,start
+" Spelling highlighting colours
+hi SpellBad ctermfg=15 ctermbg=1
+hi SpellLocal ctermbg=8
+set spelllang=en_gb,uk,de_ch
+" Open panes below or right from the current document
+set splitbelow
+set splitright
+call Tabs(3,0)

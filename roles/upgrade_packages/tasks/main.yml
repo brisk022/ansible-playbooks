@@ -6,6 +6,7 @@
     autoremove: yes
     autoclean: yes
   become: yes
+  register: "upgrade"
   when: "ansible_facts['os_family'] == 'Debian'"
 
 - name: Upgrade CentOS
@@ -14,9 +15,11 @@
     state: latest
     name: '*'
   become: yes
+  register: "upgrade"
   when: "ansible_facts['os_family'] == 'RedHat'"
 
 - name: Reboot
   reboot:
   become: yes
+  when: upgrade.changed
 
