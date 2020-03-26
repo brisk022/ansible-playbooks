@@ -1,6 +1,24 @@
 set nocompatible
+filetype off
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+Plugin 'VundleVim/Vundle.vim'
+Plugin 'scrooloose/syntastic'
+Plugin 'godlygeek/tabular'
+Plugin 'tpope/vim-surround'
+Plugin 'lumiliet/vim-twig'
+" All colour schemes from vim.org 
+Plugin 'flazz/vim-colorschemes'
+Plugin 'vim-python/python-syntax'
+Plugin 'tpope/vim-sensible'
+Plugin 'tpope/vim-sleuth'
+call vundle#end()
 filetype plugin indent on
 
+runtime! plugin/sensible.vim
+" Otherwise the status bar is too bright
+set laststatus=1
+set tabstop=3
 function! Tabs(width, ...)
 	let &shiftwidth=a:width
 	let &tabstop=a:width
@@ -11,27 +29,33 @@ function! Tabs(width, ...)
 		set noexpandtab
 	endif
 endfunction
-set autoindent
 " These will prevent the argument alignment in R files
 let r_indent_align_args = 0
 let r_indent_ess_comments = 0
 let r_indent_ess_compatible = 0
+" python
+let g:python_recommended_style = 0
+let g:python_highlight_all = 1
 set number
 set numberwidth=4
-set ruler
+" set ruler
 " inoremap jk <ESC>
 map <S-Enter> O<ESC>
 map <Enter> o<ESC>
-syntax on
-colorscheme matrix
+" syntax on
+colorscheme roman
+" Ukrainian keymap Ctrl+^
+set keymap=ukrainian-jcuken
+set iminsert=0
+set imsearch=0
 " Margin indicator. hi must be after colorscheme
 set colorcolumn=101
-hi ColorColumn ctermbg=darkblue
+"hi ColorColumn ctermbg=darkblue
 " Textwidth for wrapping. Add t to fo for automatic wrapping
 set textwidth=100
 set formatoptions=cq
-" In MacPorts vim this value is reset
-set backspace=indent,eol,start
+" Tabular hot key, leader is \
+nmap <leader>a :Tabularize /
 " Spelling highlighting colours
 hi SpellBad ctermfg=15 ctermbg=1
 hi SpellLocal ctermbg=8
@@ -39,4 +63,4 @@ set spelllang=en_gb,uk,de_ch
 " Open panes below or right from the current document
 set splitbelow
 set splitright
-call Tabs(3,0)
+" call Tabs(3,0)

@@ -19,6 +19,12 @@
     dest: ~/.vimrc
     mode: '644'
 
+- name: Copy roman.vim
+  copy:
+    src: templates/roman.vim
+    dest: ~/.vim/colors/
+    mode: '644'
+
 - name: Copy bash_aliases
   copy:
     src: templates/bash_aliases
@@ -37,5 +43,12 @@
     dest: ~/.inputrc
     mode: '644'
 
+- name: Retrieve vundle
+  git:
+    repo: 'https://github.com/VundleVim/Vundle.vim.git'
+    dest: '~/.vim/bundle/Vundle.vim'
 
-    # vim, aliases, term, keychain, conda?
+- name: Install vim plugins
+  command: vim +PluginInstall +qall
+
+#  term, conda?
