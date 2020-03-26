@@ -4,8 +4,8 @@
   vars:
     servers:
       - name: matlab-image-ubuntu
-        image: "***Ubuntu 18.04 (2019-05-24)"
-        flavor: 2cpu-2ram-server
+        image: "a5d74672-bb5e-4cae-8969-559bc11c11f4"
+        flavor: 2cpu-8ram-hpc
         key_name: ''
         nics:
           - net-name: uzh-only
@@ -18,7 +18,7 @@
 - name: Install Matlab
   hosts: matlab_image
   vars:
-    matlab_version: R2019a
+    matlab_version: R2019b
     iso_name: "{{ matlab_version }}_Linux.iso"
     iso_base_url: ''
     matlab_FIK: ''

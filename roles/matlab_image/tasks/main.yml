@@ -2,11 +2,14 @@
 - name: Install dependencies
   apt:
     name:
-      - openjdk-8-jre-headless
+      - openjdk-8-jdk
       - build-essential
       - libxt6
       - libxft2
       - xauth
+      - gcc-6
+      - g++-6
+      - gfortran-6
   become: yes
   when: "ansible_facts['os_family'] == 'Debian'"
 
