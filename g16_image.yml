@@ -1,0 +1,24 @@
+---
+- name: Create instance
+  hosts: localhost
+  vars:
+    servers:
+      - name: g16-image-ubuntu
+        image: "e562de1f-5e96-480e-8067-8ee90c4189c4"
+        flavor: 2cpu-8ram-hpcv3
+        key_name: rbrisk_s3it
+        nics:
+          - net-name: uzh-only
+        meta:
+          group: g16_image
+          ssh_user: ubuntu
+  roles:
+    - { role: create_instances }
+
+- name: Install g16
+  hosts: g16_image
+  roles:
+    - { role: upgrade_packages }
+    - { role: g16_image }
+    - { role: image_cleanup }
+

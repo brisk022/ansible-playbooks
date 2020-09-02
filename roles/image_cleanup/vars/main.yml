@@ -1,0 +1,15 @@
+dirs_to_clean:
+  - /home/centos
+  - /home/debian
+  - /home/ubuntu
+  - /root
+  - "{{ ansible_user_dir }}"
+files_to_remove:
+  - .ansible
+  - .bash_history
+  - .cache
+  - .lesshst
+  - .ssh/authorized_keys
+  - .sudo_as_admin_successful
+  - .Xauthority
+  - .viminfo

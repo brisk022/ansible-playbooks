@@ -1,0 +1,14 @@
+#!/usr/bin/env tcsh
+
+setenv g16root "${1}"
+setenv PGI "${2}"
+setenv PGIDIR "${3}"
+setenv logfile "${4}"
+
+cd $g16root/g16
+# Despite PGI and PGIDIR, it cannot find the binaries
+setenv PATH "${PATH}:${PGIDIR}/bin"
+# This might be redundant. It does not seem to do anything useful.
+bsd/install
+source $g16root/g16/bsd/g16.login
+bsd/bldg16 >& $logfile

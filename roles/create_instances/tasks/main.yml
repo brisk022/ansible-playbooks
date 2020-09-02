@@ -15,7 +15,7 @@
 - name: Timeout
   pause:
     minutes: 1
-  when: os_hosts.changed 
+  when: os_hosts.changed
 
 - name: Add hosts to inventory
   add_host:

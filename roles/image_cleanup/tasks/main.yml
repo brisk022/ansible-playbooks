@@ -1,0 +1,47 @@
+---
+- name: Clean up VM before snapshot (package files)
+  command: apt-get clean -y
+  become: yes
+  when: 'ansible_os_family == "Debian"'
+
+- name: Cloud files
+  find:
+    paths:
+      - /var/lib/cloud/data
+      - /var/lib/cloud/instances
+      - /var/lib/cloud/handlers
+    patterns: "*"
+  register: cloud_files
+
+- name: Log files
+  find:
+    paths: "/var/log"
+    patterns: "*.log"
+  register: log_files
+
+- name: Clean up VM before snapshot (system files)
+  file:
+    path: '{{ item }}'
+    state: absent
+    force: yes
+  become: yes
+  loop:
+    - "/etc/cloud/uzh-customization-script"
+    - "/var/lib/cloud/instance"
+    - "{{ cloud_files.files|flatten(levels=1) }}"
+    - "{{ log_files.files|flatten(levels=1) }}"
+
+- name: Clean up VM before snapshot (user files)
+  file:
+    path: '{{ item.0 }}/{{ item.1 }}'
+    state: absent
+    force: yes
+  become: yes
+  loop: "{{ dirs_to_clean|product(files_to_remove)|list }}"
+
+- name: Trim root filesystem before snapshotting
+  command: fstrim -av
+  become: yes
+  # XXX: `fstrim` may not be installed on all images,
+  # or drivers may not support the FITRIM ioctl
+  # -a flag instructs to trim all trimmable devices

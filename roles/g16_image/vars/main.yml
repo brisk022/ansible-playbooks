@@ -1,0 +1,18 @@
+# You need to override gaussian_src with an absolute path to wkssrc.tbz
+#
+# The following 4 variables are combined as
+# {nvhpc_url_root}/{nvhpc_name1}_{nvhpc_ver}_amd64.deb
+# to obtain something like
+# https://developer.download.nvidia.com/hpc-sdk/nvhpc-20-7_20.7_amd64.deb
+nvhpc:
+  url_root: https://developer.download.nvidia.com/hpc-sdk
+  suffix: "_20.7_amd64.deb"
+  name:
+    - nvhpc-20-7
+    - nvhpc-2020
+g16root: /opt/gaussian
+gaussian_src: wkssrc.tbz
+workdir: /home/ubuntu/tmp_work_dir
+pgiroot: /opt/nvidia/hpc_sdk/Linux_x86_64/2020
+pgidir: "{{ pgiroot }}/compilers"
+expExeN: 85

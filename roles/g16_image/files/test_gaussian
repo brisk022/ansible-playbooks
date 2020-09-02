@@ -1,0 +1,47 @@
+#!/bin/bash
+
+export g16root="$1"
+if [[ ! -d "$g16root" ]]; then
+	echo "g16root ($g16root) does not exist. Bailing."
+	exit 1
+fi
+
+if [[ ! -d "$HOME" ]]; then
+	echo "HOME ($HOME) is not set or does not exist. Bailing."
+	exit 1
+fi
+
+wd=$HOME/g16_test
+source $g16root/g16/bsd/g16.profile
+export GAUSS_SCRDIR=$wd/scrdir
+mkdir -p $GAUSS_SCRDIR
+# According to the documentation, g16 is supposed to write to $GAUSS_ARCHDIR instead it just
+# "punches" to the working directory. At this point, I cannot really set my expectations any lower...
+export GAUSS_ARCHDIR="$wd/arch"
+mkdir -p $GAUSS_ARCHDIR
+pathLog=$wd/water.log
+
+g16 <<END > $pathLog
+%Chk=$wd/water
+# RHF/6-31G(d)
+
+water energy
+
+0  1
+O
+H  1  1.0
+H  1  1.0  2  120.0
+
+END
+echo "Job done."
+
+# Print last line
+tail -1 $pathLog
+# If the line is not there, it will exit with 1
+tail -1 $pathLog | grep 'Normal termination'
+
+# Since it ignores ARCHDIR, there is no other choice but remove the archive file explicitly
+if [[ -f "fort.7" ]]; then
+	rm "fort.7"
+fi
+rm -rf "$wd"

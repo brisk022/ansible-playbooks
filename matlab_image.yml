@@ -6,7 +6,7 @@
       - name: matlab-image-ubuntu
         image: "8a8b5193-3704-4778-8efd-9d36ad0e29c3"
         flavor: 2cpu-8ram-hpcv3
-        key_name: ''
+        key_name: rbrisk_s3it
         nics:
           - net-name: uzh-only
         meta:

@@ -1,0 +1,138 @@
+---
+- name: Install dependencies
+  apt:
+    name:
+      - gnupg
+      - curl
+      - tar
+      - gzip
+      - bzip2
+      - xz-utils
+      - build-essential
+      - tcsh
+      - dpkg-dev
+  become: yes
+
+- name: Create workdir
+  file:
+    path: "{{ workdir }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "775"
+
+# The nvhpc packages have circular dependencies but installing two devs with circular dependencies
+# with ansible is a huge pain.
+- name: Create debs dir
+  file:
+    path: "{{ workdir }}/debs"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: "755"
+
+- name: Download NVIDIA HPC SDK
+  get_url:
+    url: "{{ nvhpc['url_root'] }}/{{ item }}{{ nvhpc['suffix'] }}"
+    dest: "{{ workdir }}/debs/{{ item }}{{ nvhpc['suffix'] }}"
+    mode: "664"
+    owner: ubuntu
+    group: ubuntu
+  loop: "{{ nvhpc['name'] }}"
+  register: nvhpc_debs
+
+#- name: Print HPC vars
+#  debug:
+#    var: nvhpc_debs.results
+#
+#- name: Install NVIDIA HPC SDK
+#  shell: "apt install {{ nvhpc_debs.results | map(attribute='dest') | list | join(' ') }}"
+#  become: yes
+
+- name: Configure local deb repository for HPC SDK
+  shell: dpkg-scanpackages . | gzip > Packages.gz
+  become: yes
+  args:
+    chdir: "{{ workdir }}/debs/"
+    creates: Packages.gz
+
+- name: Add local deb repository for HPC SDK
+  apt_repository:
+    repo: deb [trusted=yes] file:{{ workdir }}/debs ./
+    state: present
+    filename: nvhpc
+    validate_certs: no
+    mode: 600
+  become: yes
+
+- name: Install NVIDIA HPC SDK
+  apt:
+    name: "{{ nvhpc['name'] }}"
+  become: yes
+
+- name: Create installation directory
+  file:
+    path: "{{ g16root }}"
+    state: directory
+    mode: '755'
+    owner: ubuntu
+    group: ubuntu
+  become: yes
+
+- name: Extract Gaussian source archive
+  unarchive:
+    src: "{{ gaussian_src }}"
+    dest: "{{ g16root }}"
+    owner: ubuntu
+    group: ubuntu
+
+# grate has the latest timestamp out of all files that do not exist prior to the installation
+# Warning: gau-machine is touched several times during installation and should not be used as an
+# indicator of successfull installation.
+- name: Install Gaussian
+  script:
+    cmd: files/install_gaussian {{ g16root }} {{ pgiroot }} {{ pgidir }} {{ workdir }}/install_log
+    creates: "{{ workdir }}/install.log"
+
+- name: Test compiled files
+  shell: |
+    exeN=$(ls {{ g16root }}/g16/*.exe | wc -l)
+    if [ $exeN -eq {{ expExeN }} ]; then
+      echo "Found $exeN binaries as expected"
+    else
+      echo "Found only $exeN binaries. Some are missing."
+      exit 1
+    fi
+
+- name: Remove HPC SDK packages
+  apt:
+    name: "{{ nvhpc['name'] }}"
+    state: absent
+  become: yes
+
+- name: Remove local deb repository
+  apt_repository:
+    repo: deb [trusted=yes] file:{{ workdir }}/debs ./
+    state: absent
+    filename: nvhpc
+  become: yes
+
+- name: Source g16 profile
+  blockinfile:
+    path: /home/ubuntu/.bashrc
+    block: |
+      export g16root={{ g16root }}
+      source $g16root/g16/bsd/g16.profile
+
+# Test must be after the removal of HPC packages to make sure that we do not purge some required
+# libs
+- name: Test Gaussian
+  script:
+    cmd: files/test_gaussian {{ g16root }}
+
+- name: Cleanup
+  file:
+    path: "{{ workdir }}"
+    state: absent
+  become: yes
+

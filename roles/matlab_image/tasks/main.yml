@@ -67,12 +67,12 @@
     dest: "{{ iso_dir }}/{{ iso_name }}"
   when: not iso_path_info.stat.exists
 
-- name: Create ISO mount point
-  file:
-    path: "{{ iso_mount_point }}"
-    state: directory
-    mode: '755'
-  become: yes
+#- name: Create ISO mount point
+#  file:
+#    path: "{{ iso_mount_point }}"
+#    state: directory
+#    mode: '755'
+#  become: yes
 
 - name: Mount ISO image
   mount:
@@ -84,22 +84,11 @@
     boot: no
   become: yes
 
-- name: Copy activate.ini template
-  copy:
-    src: "{{ iso_mount_point }}/activate.ini"
-    remote_src: yes
+- name: Create activate.ini
+  template:
+    src: "templates/activate.ini.j2"
     dest: "{{ activate_path }}"
     mode: '644'
-
-- name: Customize activate.ini
-  lineinfile:
-    dest: "{{ activate_path }}"
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    backrefs: yes
-  loop:
-    - { regexp: '^(activateCommand)=$', line: '\1=activateOffline' }
-    - { regexp: '^(licenseFile)=$', line: '\1={{ license_path }}' }
 
 - name: Copy installer input template
   copy:
@@ -193,7 +182,7 @@
   loop:
     - /tmp/installer_input.txt
     - /tmp/activate.ini
-    - /tmp/mathworks_root.log
+    - /tmp/aws_root.log
     - "{{ iso_mount_point }}"
     - "{{ volume_mount_point }}"
   become: yes
@@ -205,7 +194,7 @@
     state: absent
   loop:
     - /tmp/license.lic
-    - /tmp/aws_root.log
+    - /tmp/mathworks_root.log
   become: yes
   when: activation_success|bool
 
