@@ -1,0 +1,7 @@
+---
+- name: Singularity registry
+  hosts: sregistry
+  roles:
+    - { role: upgrade_packages }
+    - { role: docker }
+    - { role: sregistry }

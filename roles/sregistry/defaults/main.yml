@@ -1,0 +1,29 @@
+cert:
+  cert: ""
+  privatekey: ""
+  csr: ""
+  dhparam: ""
+registry:
+  install_dir: ""
+  prefix: ""
+  secret_key: ""
+  domain_name: ""
+  domain_name_http: ""
+  admin_name: ""
+  admin_email: ""
+  help_email: ""
+  help_institution_site: ""
+  name: ""
+  uri: ""
+  max_size: ""
+repo:
+  update_repo: no
+  version: "0c88404"
+ldap:
+  server_uri: ""
+  bind_password: ""
+  bind_dn: ""
+  search_dn: ""
+minio:
+  access_key: ""
+  secret_key: ""

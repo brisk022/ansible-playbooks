@@ -1,0 +1,121 @@
+---
+# Requires community.general and community.crypto collections
+
+- name: Install prerequisites
+  apt:
+    name:
+      - python3-docker
+    update-cache: yes
+  become: yes
+
+##
+## Certificate
+##
+- name: Create private key for the certificate
+  community.crypto.openssl_privatekey:
+    path: "{{ cert.privatekey }}"
+  become: yes
+
+- name: Create certificate signing request
+  community.crypto.openssl_csr:
+    path: "{{ cert.csr }}"
+    privatekey_path: "{{ cert.privatekey }}"
+    country_name: "CH"
+    organization_name: "UZH"
+    organizational_unit_name: "S3IT"
+    email_address: "{{ registry.help_email }}"
+    common_name: "{{ instance_ip }}"
+    subject_alt_name:
+      - "IP:{{ instance_ip }}"
+      - "IP:127.0.0.1"
+      - "DNS:minio"
+      - "DNS:{{ instance_ip }}"
+      - "DNS:127.0.0.1"
+  become: yes
+
+- name: Create self-signed certificate
+  community.crypto.x509_certificate:
+    path: "{{ cert.cert }}"
+    privatekey_path: "{{ cert.privatekey }}"
+    csr_path: "{{ cert.csr }}"
+    provider: "selfsigned"
+  become: yes
+
+- name: Create dhparam file
+  community.crypto.openssl_dhparam:
+    path: "{{ cert.dhparam }}"
+  become: yes
+
+
+##
+## Repository and configuration
+##
+
+- name: Create installation directory
+  file:
+    path: "{{ registry.install_dir }}"
+    state: "directory"
+    mode: "755"
+    owner: "{{ ansible_user_id }}"
+  become: yes
+
+# We are discarding all changes because we replay them later
+- name: Clone repository
+  git:
+    repo: "https://github.com/singularityhub/sregistry"
+    dest: "{{ registry.prefix }}"
+    force: yes
+    update: "{{ repo.update_repo }}"
+    version: "{{ repo.version }}"
+
+- name: Add secrets file
+  template:
+    src: "templates/secrets.py.j2"
+    dest: "{{ registry.prefix }}/shub/settings/secrets.py"
+    mode: "644"
+
+- name: Replace config file
+  template:
+    src: "templates/config.py.j2"
+    dest: "{{ registry.prefix }}/shub/settings/config.py"
+    mode: "644"
+
+- name: Replace minio env file
+  template:
+    src: "templates/minio-env.j2"
+    dest: "{{ registry.prefix }}/.minio-env"
+    mode: "644"
+
+- name: Replace nginx.conf
+  template:
+    src: "templates/nginx.conf.j2"
+    dest: "{{ registry.prefix }}/nginx.conf"
+    mode: "644"
+
+- name: Replace docker-compose.yml
+  template:
+    src: "templates/docker-compose.yml.j2"
+    dest: "{{ registry.prefix }}/docker-compose.yml"
+    mode: "644"
+
+- name: Rebuild sregistry container with ldap support
+  community.general.docker_image:
+    name: "quay.io/vanessa/sregistry"
+    build:
+      path: "{{ registry.prefix }}"
+      pull: "{{ repo.update_repo }}"
+      args:
+        ENABLE_LDAP: "true"
+    source: "build"
+  register: build_sregistry_out
+
+- debug: var=build_sregistry_out
+
+- name: Add systemd service
+  template:
+    src: "templates/systemd_registry.service.j2"
+    dest: "/etc/systemd/system/registry.service"
+    mode: "644"
+  become: yes
+
+
